@@ -1,0 +1,80 @@
+# CI (blueprint Phase 0 + Phase 1). Written in the authoring environment; the first push to
+# GitHub is its first real run. Action versions are major tags; pin to commit SHAs in Phase 15.
+#
+# Phase 1 adds a PostgreSQL service container and runs the integration gate (app-role bootstrap,
+# migration, RLS + two-tenant isolation tests) so the tenant-security exit gate is verified in CI.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: marketpulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The owner (superuser) connection for migrations + role bootstrap.
+      MP_DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/marketpulse
+      # The application role connection (created by bootstrap_app_role.py).
+      MP_DATABASE_URL: postgresql://marketpulse_app:ci-app-role-pw@localhost:5432/marketpulse
+      MP_DB_APP_ROLE: marketpulse_app
+      MP_DB_APP_PASSWORD: ci-app-role-pw
+      MP_ENVIRONMENT: test
+      MP_ENABLE_DEV_TENANT_HEADER: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run pytest                      # unit tests (integration deselected)
+      - name: Bootstrap app role (ADR-0023)
+        run: uv run python scripts/db/bootstrap_app_role.py
+      - name: Apply migration
+        run: uv run alembic upgrade head
+      - name: Integration tests (migration, RLS, two-tenant isolation)
+        run: uv run pytest -m integration
+      - name: Dependency audit
+        run: uv run pip-audit --skip-editable
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Dependency audit
+        run: npm audit --audit-level=high

@@ -1,0 +1,69 @@
+/* Design tokens + global styles (blueprint 13.10).
+ *
+ * Premium dark navy foundation, restrained metallic-gold accent, light-gray
+ * typography. Gold marks selected/high-value emphasis only. Focus rings are
+ * always visible for keyboard navigation; motion respects reduced-motion. */
+@import "tailwindcss";
+
+@theme {
+  /* Foundations */
+  --color-navy-950: #060b16;
+  --color-navy-900: #0b1220;
+  --color-navy-850: #0e1626;
+  --color-navy-800: #131d31;
+  --color-navy-700: #1b2740;
+  --color-navy-600: #263452;
+
+  /* Accent: metallic gold for selection and high-value emphasis */
+  --color-gold-500: #c9a227;
+  --color-gold-400: #d9b545;
+  --color-gold-300: #e6c968;
+
+  /* Typography scale colors */
+  --color-ink-50: #f6f8fb;
+  --color-ink-200: #d5dae3;
+  --color-ink-400: #9aa4b5;
+  --color-ink-500: #7c8699;
+
+  /* Status colors (paired with text labels, never color-only) */
+  --color-status-ok: #34d399;
+  --color-status-warn: #fbbf24;
+  --color-status-error: #f87171;
+  --color-status-info: #60a5fa;
+
+  --radius-card: 0.75rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-navy-950 text-ink-50 antialiased;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Keyboard navigation: a clearly visible focus ring everywhere. */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-gold-500;
+}
+
+/* Skip link: first tab stop on every page, visually hidden until focused. */
+.skip-link {
+  @apply absolute left-4 top-4 z-50 -translate-y-16 rounded-md bg-gold-500 px-4 py-2 font-medium text-navy-950 transition-transform;
+}
+.skip-link:focus-visible {
+  @apply translate-y-0;
+}
+
+/* Respect users who prefer less motion (accessibility). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

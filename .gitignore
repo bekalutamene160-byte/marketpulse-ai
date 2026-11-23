@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets and local state: never commit these
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite3
+
+# Collected evidence (screenshots, HTML snapshots) can be large
+data/evidence/
+
+# Frontend
+node_modules/
+dist/
+*.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

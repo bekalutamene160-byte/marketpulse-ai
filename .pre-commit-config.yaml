@@ -1,0 +1,25 @@
+# Install once from the repo root:  (cd backend && uv run pre-commit install --config ../.pre-commit-config.yaml)
+# Hooks run on `git commit` and block it on failure. Local hooks use the project's own locked tools.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: bash -c 'cd backend && uv run ruff check .'
+        language: system
+        pass_filenames: false
+        files: ^backend/
+      - id: ruff-format
+        name: ruff format check
+        entry: bash -c 'cd backend && uv run ruff format --check .'
+        language: system
+        pass_filenames: false
+        files: ^backend/

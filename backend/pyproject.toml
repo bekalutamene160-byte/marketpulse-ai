@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marketpulse"
+version = "0.2.0"
+description = "MarketPulse AI backend: API, worker, deterministic intelligence services"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.14.0",
+    "argon2-cffi>=23.1.0",
+    "dramatiq[redis]>=2.2.1",
+    "fastapi>=0.165.0",
+    "psycopg[binary]>=3.3.9",
+    "pydantic-settings>=2.16.3",
+    "redis>=8.1.0",
+    "sqlalchemy>=2.0.36",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+# Integration tests talk to real Postgres/Redis, so they are opt-in:
+#   uv run pytest -m integration
+addopts = "-ra --strict-markers -m 'not integration'"
+markers = [
+    "integration: needs real PostgreSQL/Redis configured via MP_* environment or .env",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "migrations"]
+
+[tool.ruff.lint]
+# E/F pycodestyle+pyflakes, I imports, B bugbear, UP modern syntax,
+# S security (bandit rules), SIM simplifications, ASYNC async pitfalls
+select = ["E", "F", "I", "B", "UP", "S", "SIM", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]  # asserts are the point; test passwords are not real secrets
+"migrations/**" = ["E501", "S608"]  # hand-written SQL DDL lines + validated GRANT role names
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+packages = ["marketpulse"]
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+module = "argon2"
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.2",
+    "mypy>=2.4.1",
+    "pip-audit>=2.10.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "ruff>=0.17.6",
+    "sqlparse>=0.5.0",
+]

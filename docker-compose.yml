@@ -1,0 +1,35 @@
+# OPTIONAL local infrastructure (ADR-0019). The default development path uses cloud services.
+# Written to match blueprint 19.1; NOT executed in the authoring environment (no Docker daemon).
+# Throwaway credentials: local use only. Ports bind to localhost so nothing is exposed to the network.
+# API, worker and frontend run on the host with `uv run` / `npm run dev` in Phase 0.
+# Container images for them are added when deployment is built (Phase 15).
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: marketpulse
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: marketpulse
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketpulse -d marketpulse"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
